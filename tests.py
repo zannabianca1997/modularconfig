@@ -1,6 +1,7 @@
 import json
-from os import remove, mkdir, getcwd
+from os import remove, mkdir, getcwd, rmdir
 from os.path import join, exists, samefile
+from shutil import rmtree
 from tempfile import mkdtemp, NamedTemporaryFile
 from unittest import TestCase, defaultTestLoader, skipIf
 
@@ -137,6 +138,8 @@ class ConfigDir(TestCase):
         with open(join(self.dir, "./Nested/nested.json"), "w") as out:
             json.dump(example_json, out)
 
+    def tearDown(self):
+        rmtree(self.dir)
 
     def test_get_dir(self):
         self.assertDictEqual(
