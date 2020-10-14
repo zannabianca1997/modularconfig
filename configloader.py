@@ -99,20 +99,20 @@ def _load_string(text: str):
     return data
 
 
-def load_file(config_file: PathLike):
+def reload_file(config_file: PathLike):
     """Load (or reload) the file in the memory
 
     >>> import tempfile; tmp_file = tempfile.mktemp()
     >>> with open(tmp_file, "w") as out:
     ...     out.write('{"answer": 42}')
     14
-    >>> load_file(tmp_file)
+    >>> reload_file(tmp_file)
     >>> _configs[tmp_file]
     {'answer': 42}
     >>> with open(tmp_file, "w") as out:
     ...     out.write('{"answer": 42, "question":"6x9"}')
     32
-    >>> load_file(tmp_file)  # will reload the file
+    >>> reload_file(tmp_file)  # will reload the file
     >>> _configs[tmp_file]
     {'answer': 42, 'question': '6x9'}
     """
@@ -140,7 +140,8 @@ def ensure_file(config_file: PathLike):
     {'answer': 42}
     """
     if config_file not in _configs:
-        load_file(config_file)
+        reload_file(config_file)
+
 
 
 def _get_attr(obj: object, attrs: Iterable[str]):
@@ -202,9 +203,15 @@ def open_config_directory(relative_config_directory: PathLike):
     """Temporanely set a new config directory. Can be relative to the old"""
     global config_directory
     old_dir = config_directory
-    config_directory = join(config_directory, relative_config_directory)
+    change_config_directory(relative_config_directory)
     yield
     config_directory = old_dir  # returning back
+
+
+def change_config_directory(relative_config_directory: PathLike):
+    """Change the config directory. Can be relative to the old"""
+    global config_directory
+    config_directory = normpath(join(config_directory, relative_config_directory))
 
 
 def get(config: PathLike):

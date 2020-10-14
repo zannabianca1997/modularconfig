@@ -73,7 +73,7 @@ class SimpleFiles(TestCase):
         for name, func, check_func in [
             ("do_nothing", lambda x: None, self.assertNotEqual),
             ("ensure_file", configloader.ensure_file, self.assertNotEqual),
-            ("load_file", configloader.load_file, self.assertEqual)
+            ("load_file", configloader.reload_file, self.assertEqual)
         ]:
             with self.subTest(name):
                 func(self.text_file)  # execute the test function
@@ -137,6 +137,7 @@ class ConfigDir(TestCase):
         with open(join(self.dir, "./Nested/nested.json"), "w") as out:
             json.dump(example_json, out)
 
+
     def test_get_dir(self):
         self.assertDictEqual(
             configloader.get(self.dir),
@@ -147,10 +148,22 @@ class ConfigDir(TestCase):
         if samefile(self.dir, getcwd()):
             self.skipTest("Temporary directory is working directory")
 
-        configloader.config_directory = self.dir
+        configloader.change_config_directory(self.dir)
         self.assertEqual(
             configloader.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
             example_text
+        )
+
+    def test_relative_set_config_dir(self):
+        if samefile(self.dir, getcwd()):
+            self.skipTest("Temporary directory is working directory")
+
+        configloader.change_config_directory(self.dir)
+        configloader.change_config_directory("./example.json/Nested")
+
+        self.assertEqual(
+            configloader.get("bar"),
+            example_json["Nested"]["bar"]
         )
 
     def test_config_dir_context(self):
