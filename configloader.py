@@ -2,20 +2,14 @@ from contextlib import contextmanager
 from logging import getLogger
 from os import PathLike, scandir, getcwd
 from os.path import split, exists, isfile, join, isdir, normpath
-from typing import Dict, List, Callable, Any, Iterable, Iterator, Tuple
+from typing import Dict, Iterable, Iterator
 
-import json
+from loaders import loaders, auto_loader
 
 logger = getLogger(__name__)
 
 # loaded objects
 _configs: Dict[PathLike, object] = {}
-
-# functions capable of loading objects from a text
-loaders: List[Tuple[str, Callable[[str], Any]]] = [
-    ("json", json.loads),
-    ("text", str)
-]
 
 # config base directory
 config_directory: PathLike = getcwd()
@@ -79,16 +73,14 @@ def _load_string(text: str):
         else:
             data_type, text = splits
         data_type = data_type[6:].strip()  # getting the given type
-        for name, loader in loaders:
-            if data_type == name:
-                data = loader(text)  # leave all the eventual exceptions to propagate
-                break
+        if data_type in loaders:
+            data = loaders[data_type](text)
         else:
             raise LoaderMissingError(data_type)
     else:
-        for name, loader in loaders:
+        for name in auto_loader:
             try:
-                data = loader(text)
+                data = loaders[name](text)
             except ValueError:  # loader didn't work
                 continue  # proceed to next loader
             else:  # loaded worked

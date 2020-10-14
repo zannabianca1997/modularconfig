@@ -24,6 +24,9 @@ setup(
     include_package_data=True,
     zip_safe=True,
     install_requires=[],
+    extras_require={
+        "yaml": ["pyyaml"]
+    },
     py_modules=['configloader'],
     test_suite='tests.test_suite',
 )
