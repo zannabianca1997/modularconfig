@@ -1,9 +1,11 @@
 import json
-from os import remove, mkdir, getcwd, rmdir
+from os import remove, mkdir, getcwd
 from os.path import join, exists, samefile
 from shutil import rmtree
+from sys import modules
 from tempfile import mkdtemp, NamedTemporaryFile
-from unittest import TestCase, defaultTestLoader, skipIf, expectedFailure, skip
+from unittest import TestCase, defaultTestLoader, skipIf
+from importlib import reload, invalidate_caches
 
 try:
     import yaml
@@ -26,9 +28,8 @@ missing_file = "/I/Really/Hope/This/File/Does/Not/Exist/On/Any/System/Ever"
 
 
 class DangerousClass:
-    def __reduce__(self):
-        from os import system
-        return system, ('echo UNLIMITED POWERRR',)
+    def __init__(self):
+        self.name = "Exploitable"
 
 
 class SimpleFiles(TestCase):
@@ -221,7 +222,7 @@ class Yaml(TestCase):
 
         unsafe_yaml = NamedTemporaryFile(mode="w", delete=False)
         unsafe_yaml.write("#type: yaml\n")
-        yaml.dump(DangerousClass(), unsafe_yaml, yaml.Dumper)
+        yaml.dump(DangerousClass(), unsafe_yaml)
         self.unsafe_yaml = unsafe_yaml.name
 
     def tearDown(self):
@@ -229,12 +230,14 @@ class Yaml(TestCase):
         remove(self.unsafe_yaml)
 
     def test_safe_load(self):
+        configloader.loaders.yaml_use_full_loader = False
         self.assertDictEqual(
             configloader.get(self.safe_yaml),
             example_dict
         )
 
     def test_safe_load_unsafe(self):
+        configloader.loaders.yaml_use_full_loader = False
         try:
             configloader.get(self.unsafe_yaml)
         except ValueError as e:
@@ -245,8 +248,8 @@ class Yaml(TestCase):
         else:
             self.fail("Loaded unsafe yaml in safe mode")
 
-    @skip
     def test_load_unsafe(self):
+        configloader.loaders.yaml_use_full_loader = True
         self.assertIsInstance(
             configloader.get(self.unsafe_yaml),
             DangerousClass

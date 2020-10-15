@@ -44,6 +44,7 @@ def none(text: str) -> None:
         raise ValueError("text is not empty, 'none' or 'null'")
     return None
 
+
 def load_yaml(text: str) -> object:
     """If yaml is present will try to load text"""
     if not yaml:
