@@ -263,7 +263,7 @@ def get_config_directory():
     return _config_directory
 
 
-def ensure_file(config_file: Union[Path, str, bytes], reload: bool = False):
+def ensure(config_file: Union[Path, str, bytes], reload: bool = False):
     """Load (or reload) the file/directory in the memory
 
     >>> import tempfile; tmp_file = tempfile.mktemp()
@@ -275,10 +275,10 @@ def ensure_file(config_file: Union[Path, str, bytes], reload: bool = False):
     >>> with open(tmp_file, "w") as out:
     ...     out.write('{"answer": 54}')
     14
-    >>> ensure_file(tmp_file)
+    >>> ensure(tmp_file)
     >>> get(tmp_file)["answer"]
     42
-    >>> ensure_file(tmp_file, reload=True)
+    >>> ensure(tmp_file, reload=True)
     >>> get(tmp_file)["answer"]
     54
     """

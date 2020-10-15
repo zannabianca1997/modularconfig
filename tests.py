@@ -81,16 +81,16 @@ class SimpleFiles(TestCase):
         )
 
     def test_reload(self):
-        modularconfig.ensure_file(self.text_file)  # load the file
+        modularconfig.ensure(self.text_file)  # load the file
         with open(self.text_file, "w") as out:
             out.write(new_example_text)
         with self.subTest("do nothing"):
             self.assertEqual(modularconfig.get(self.text_file), example_text)  # nothing has changed
         with self.subTest("load again"):
-            modularconfig.ensure_file(self.text_file)
+            modularconfig.ensure(self.text_file)
             self.assertEqual(modularconfig.get(self.text_file), example_text)  # nothing has changed
         with self.subTest("reload explicity"):
-            modularconfig.ensure_file(self.text_file, reload=True)
+            modularconfig.ensure(self.text_file, reload=True)
             self.assertEqual(modularconfig.get(self.text_file), new_example_text)  # nothing has changed
 
 
