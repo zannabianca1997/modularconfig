@@ -4,6 +4,7 @@ from os import PathLike, scandir, getcwd
 from os.path import split, exists, isfile, join, isdir, normpath
 from typing import Dict, Iterable, Iterator
 
+from errors import ConfigNotFoundError, ConfigFileNotFoundError, LoadingError, LoaderMissingError
 from loaders import loaders, auto_loader
 
 logger = getLogger(__name__)
@@ -13,22 +14,6 @@ _configs: Dict[PathLike, object] = {}
 
 # config base directory
 config_directory: PathLike = getcwd()
-
-
-class ConfigNotFoundError(KeyError):
-    """The requested config is missing"""
-
-
-class ConfigFileNotFoundError(ConfigNotFoundError, FileNotFoundError):
-    """The requested config point to a file that doesn't exist"""
-
-
-class LoadingError(ValueError):
-    """There was a problem in the loading of the configs"""
-
-
-class LoaderMissingError(LoadingError):
-    """A file requested a loader that is missing"""
 
 
 def _split_attributes(config: PathLike):
