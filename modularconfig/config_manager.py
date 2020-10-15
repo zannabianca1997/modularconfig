@@ -16,7 +16,7 @@ _configs: Union[Dict[str, object], None] = None
 _loaded_paths: Set[Path] = set()
 
 # config base directory
-config_directory: Path = Path.cwd()
+_config_directory: Path = Path.cwd()
 
 
 # --- Path Management ---
@@ -64,7 +64,7 @@ def _split_config_attributes(config: PurePath) -> PurePath:
 
 
 def _relative_to_config_directory(config):
-    config = config_directory.joinpath(config).resolve()  # make it relative to the prefix (still permit absolutes)
+    config = _config_directory.joinpath(config).resolve()  # make it relative to the prefix (still permit absolutes)
     return config
 
 
@@ -244,19 +244,23 @@ def _set_attr(obj: object, attrs: PurePath, value: object):
 # --- End User Entry Points ---
 
 @contextmanager
-def open_config_directory(relative_config_directory: Union[str, PurePath]):
+def using_config_directory(relative_config_directory: Union[str, PurePath]):
     """Temporanely set a new config directory. Can be relative to the old"""
-    global config_directory
-    old_dir = config_directory
-    change_config_directory(relative_config_directory)
+    global _config_directory
+    old_dir = _config_directory
+    set_config_directory(relative_config_directory)
     yield
-    config_directory = old_dir  # returning back
+    _config_directory = old_dir  # returning back
 
 
-def change_config_directory(relative_config_directory: Union[str, PurePath]):
+def set_config_directory(relative_config_directory: Union[str, PurePath]):
     """Change the config directory. Can be relative to the old"""
-    global config_directory
-    config_directory = _relative_to_config_directory(relative_config_directory)
+    global _config_directory
+    _config_directory = _relative_to_config_directory(relative_config_directory)
+
+def get_config_directory():
+    """Return the config directory"""
+    return _config_directory
 
 
 def ensure_file(config_file: Union[Path, str, bytes], reload: bool = False):

@@ -1,6 +1,6 @@
 import loaders
 from config_manager import \
     get, \
-    change_config_directory, open_config_directory, config_directory, \
+    set_config_directory, using_config_directory, get_config_directory, \
     ensure_file
 from errors import *

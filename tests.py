@@ -165,7 +165,7 @@ class ConfigDir(TestCase):
         if samefile(self.dir, getcwd()):
             self.skipTest("Temporary directory is working directory")
 
-        modularconfig.change_config_directory(self.dir)
+        modularconfig.set_config_directory(self.dir)
         self.assertEqual(
             modularconfig.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
             example_text
@@ -175,8 +175,8 @@ class ConfigDir(TestCase):
         if samefile(self.dir, getcwd()):
             self.skipTest("Temporary directory is working directory")
 
-        modularconfig.change_config_directory(self.dir)
-        modularconfig.change_config_directory("./example.json/Nested")
+        modularconfig.set_config_directory(self.dir)
+        modularconfig.set_config_directory("./example.json/Nested")
 
         self.assertEqual(
             modularconfig.get("bar"),
@@ -186,22 +186,22 @@ class ConfigDir(TestCase):
     def test_config_dir_context(self):
         if samefile(self.dir, getcwd()):
             self.skipTest("Temporary directory is working directory")
-        old_config_dir = modularconfig.config_directory
-        with modularconfig.open_config_directory(self.dir):
+        old_config_dir = modularconfig._config_directory
+        with modularconfig.using_config_directory(self.dir):
             self.assertEqual(
                 modularconfig.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
                 example_text
             )
-        self.assertEqual(modularconfig.config_directory, old_config_dir)
+        self.assertEqual(modularconfig._config_directory, old_config_dir)
 
     def test_nested_config_dir_context(self):
-        with modularconfig.open_config_directory(self.dir):
+        with modularconfig.using_config_directory(self.dir):
             # now we are inside the directory, no "bar" here
             self.assertRaises(
                 modularconfig.ConfigNotFoundError,
                 modularconfig.get, "bar"
             )
-            with modularconfig.open_config_directory("./example.json/Nested"):
+            with modularconfig.using_config_directory("./example.json/Nested"):
                 # we entered the json file, there is the "bar" here
                 self.assertEqual(
                     modularconfig.get("bar"),
