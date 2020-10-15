@@ -6,10 +6,7 @@ setup(
     name='modularconfig',
     version=version,
     description="Modular config loader",
-    long_description='\n'.join([
-    #    open("README.rst").read(),  #todo: write readme
-    #    open('CHANGES.rst').read(),
-    ]),
+    long_description=open("README.md").read(),
     keywords='config',
     author='Giuseppe Zanichelli',
     author_email='zannabianca199712@gmail.com',
