@@ -13,6 +13,7 @@ except ImportError:
     yaml = None
 
 import configloader
+import configloader.config_manager
 
 example_dict = {
     "Foo": "foo",
@@ -80,17 +81,17 @@ class SimpleFiles(TestCase):
         )
 
     def test_reload(self):
-        configloader.get(self.text_file)  # load the file
+        configloader.ensure_file(self.text_file)  # load the file
         with open(self.text_file, "w") as out:
             out.write(new_example_text)
-        for name, func, check_func in [
-            ("do_nothing", lambda x: None, self.assertNotEqual),
-            ("ensure_file", configloader.ensure_file, self.assertNotEqual),
-            ("load_file", configloader.reload_file, self.assertEqual)
-        ]:
-            with self.subTest(name):
-                func(self.text_file)  # execute the test function
-                check_func(configloader.get(self.text_file), new_example_text)  # check if the file was/was not reloaded
+        with self.subTest("do nothing"):
+            self.assertEqual(configloader.get(self.text_file), example_text)  # nothing has changed
+        with self.subTest("load again"):
+            configloader.ensure_file(self.text_file)
+            self.assertEqual(configloader.get(self.text_file), example_text)  # nothing has changed
+        with self.subTest("reload explicity"):
+            configloader.ensure_file(self.text_file, reload=True)
+            self.assertEqual(configloader.get(self.text_file), new_example_text)  # nothing has changed
 
 
 class HeadedFiles(TestCase):
@@ -154,6 +155,7 @@ class ConfigDir(TestCase):
         rmtree(self.dir)
 
     def test_get_dir(self):
+        configloader.get(self.dir)
         self.assertDictEqual(
             configloader.get(self.dir),
             {"example.txt": example_text, "example.json": example_dict, "Nested": {'nested.json': example_dict}}
