@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Callable, Any, Union, Dict, TextIO
 
 import json
@@ -10,9 +9,11 @@ try:
     import yaml
 except ImportError:
     yaml = None
-else:
-    yaml_use_full_loader = False
 
+dangerous_loaders = {
+    "yaml_full_loader": False,
+    "python": False
+}
 
 def number(text: str) -> Union[int, float, complex]:
     """Try to load a number as a int, then as a float, then as a complex"""
@@ -52,7 +53,7 @@ def load_yaml(text: str) -> object:
     if not yaml:
         raise ValueError("Yaml is not installed, can't be used in a file")
     try:
-        if yaml_use_full_loader:
+        if dangerous_loaders["yaml_full_loader"]:
             docs = list(yaml.full_load_all(text))  # load the full yaml
         else:
             docs = list(yaml.safe_load_all(text))  # only safe features

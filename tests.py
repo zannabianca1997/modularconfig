@@ -232,14 +232,14 @@ class Yaml(TestCase):
         remove(self.unsafe_yaml)
 
     def test_safe_load(self):
-        configloader.loaders.yaml_use_full_loader = False
+        configloader.loaders.dangerous_loaders["yaml_full_loader"] = False
         self.assertDictEqual(
             configloader.get(self.safe_yaml),
             example_dict
         )
 
     def test_safe_load_unsafe(self):
-        configloader.loaders.yaml_use_full_loader = False
+        configloader.loaders.dangerous_loaders["yaml_full_loader"] = False
         try:
             configloader.get(self.unsafe_yaml)
         except ValueError as e:
@@ -251,7 +251,7 @@ class Yaml(TestCase):
             self.fail("Loaded unsafe yaml in safe mode")
 
     def test_load_unsafe(self):
-        configloader.loaders.yaml_use_full_loader = True
+        configloader.loaders.dangerous_loaders["yaml_full_loader"] = True
         self.assertIsInstance(
             configloader.get(self.unsafe_yaml),
             DangerousClass
