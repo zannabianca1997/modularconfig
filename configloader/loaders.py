@@ -1,8 +1,10 @@
-from typing import List, Tuple, Callable, Any, Union, Dict
+from pathlib import Path
+from typing import List, Callable, Any, Union, Dict, TextIO
 
 import json
 from base64 import b64decode
-from warnings import warn
+
+from errors import LoaderMissingError, LoadingError
 
 try:
     import yaml
@@ -63,8 +65,6 @@ def load_yaml(text: str) -> object:
     return docs  # leave as a list of documents
 
 
-
-
 # disponible loaders
 loaders: Dict[str, Callable[[str], Any]] = {
     # dict types
@@ -100,3 +100,49 @@ auto_loader: List[str] = [
 
 if yaml:
     auto_loader[auto_loader.index("json")] = "yaml"  # substituting json with is superset yaml
+
+
+def load_file(file: TextIO):
+    """Load a python object from the file content
+    Try all the loaders from loaders in order
+    >>> from io import StringIO
+    >>> load_file(StringIO('{"answer": 42, "question": "6x9"}'))  # json
+    {'answer': 42, 'question': '6x9'}
+    >>> load_file(StringIO("Value"))  # load directly as string
+    'Value'
+
+    A particular loader can be specified, if invalid errors are propagated
+    >>> load_file(StringIO("#type:text\\n{'data':'this is not a json'}"))
+    "{'data':'this is not a json'}"
+    >>> load_file(StringIO("#type: json \\n InvalidJson"))
+    Traceback (most recent call last):
+      ...
+    json.decoder.JSONDecodeError: Expecting value: line 1 column 2 (char 1)
+
+    Logs the failed tries with the logging module, with level logging.DEBUG
+    """
+    text = file.read()
+    if text.startswith("#type:"):  # a loader is specified
+        splits = text.split("\n", maxsplit=1)  # taking away first line
+        if len(splits) == 1:  # only one line, loaders is given but data is empty
+            data_type = splits[0]
+            text = ""
+        else:
+            data_type, text = splits
+        data_type = data_type[6:].strip()  # getting the given type
+        if data_type in loaders:
+            data = loaders[data_type](text)
+        else:
+            raise LoaderMissingError(data_type)
+    else:
+        for name in auto_loader:
+            try:
+                data = loaders[name](text)
+            except ValueError:  # loader didn't work
+                continue  # proceed to next loader
+            else:  # loaded worked
+                break  # stop trying, data was found
+        else:  # no loader worked
+            # usually this is never throw thanks to text loader
+            raise LoadingError("None of the loaders worked, try to add type specification to see the error")
+    return data

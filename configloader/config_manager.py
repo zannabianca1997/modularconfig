@@ -3,8 +3,8 @@ from logging import getLogger
 from pathlib import Path, PurePath
 from typing import Dict, Iterator, Union, overload, Set, List
 
-from errors import ConfigNotFoundError, ConfigFileNotFoundError, LoadingError, LoaderMissingError
-from loaders import loaders, auto_loader
+from errors import ConfigNotFoundError, ConfigFileNotFoundError
+from loaders import load_file
 
 logger = getLogger(__name__)
 
@@ -111,52 +111,8 @@ def _rebase(new_common_config_path: Path) -> None:
 
 # --- File Loading ---
 
-def _load_string(text: str):
-    """Load a python object from the file content
-    Try all the loaders from loaders in order
 
-    >>> _load_string('{"answer": 42, "question": "6x9"}')  # json
-    {'answer': 42, 'question': '6x9'}
-    >>> _load_string("Value")  # load directly as string
-    'Value'
-
-    A particular loader can be specified, if invalid errors are propagated
-    >>> _load_string("#type:text\\n{'data':'this is not a json'}")
-    "{'data':'this is not a json'}"
-    >>> _load_string("#type: json \\n InvalidJson")
-    Traceback (most recent call last):
-      ...
-    json.decoder.JSONDecodeError: Expecting value: line 1 column 2 (char 1)
-
-    Logs the failed tries with the logging module, with level logging.DEBUG
-    """
-    if text.startswith("#type:"):  # a loader is specified
-        splits = text.split("\n", maxsplit=1)  # taking away first line
-        if len(splits) == 1:  # only one line, loaders is given but data is empty
-            data_type = splits[0]
-            text = ""
-        else:
-            data_type, text = splits
-        data_type = data_type[6:].strip()  # getting the given type
-        if data_type in loaders:
-            data = loaders[data_type](text)
-        else:
-            raise LoaderMissingError(data_type)
-    else:
-        for name in auto_loader:
-            try:
-                data = loaders[name](text)
-            except ValueError:  # loader didn't work
-                continue  # proceed to next loader
-            else:  # loaded worked
-                break  # stop trying, data was found
-        else:  # no loader worked
-            # usually this is never throw thanks to text loader
-            raise LoadingError("None of the loaders worked, try to add type specification to see the error")
-    return data
-
-
-def _load_file(config_file: Path, reload: bool):
+def _load_path(config_file: Path, reload: bool):
     """Load (or reload) the file/directory in the memory
 
     >>> import tempfile; tmp_file = tempfile.mktemp()
@@ -168,31 +124,30 @@ def _load_file(config_file: Path, reload: bool):
     >>> with open(tmp_file, "w") as out:
     ...     out.write('{"answer": 54}')
     14
-    >>> _load_file(Path(tmp_file), reload=False)
+    >>> _load_path(Path(tmp_file), reload=False)
     >>> get(tmp_file)["answer"]
     42
-    >>> _load_file(Path(tmp_file), reload=True)
+    >>> _load_path(Path(tmp_file), reload=True)
     >>> get(tmp_file)["answer"]
     54
     """
     global _loaded_paths, _common_configs_path, _configs
 
-    def recursive_load_file(config_file: Path):
+    def recursive_load_path(config_file: Path):
         """Recursive reload all files"""
         if (not reload) and (config_file in _loaded_paths):
             return  # this path is already loaded
         config_attributes = _split_config_attributes(config_file)
         if config_file.is_file():
-            with open(config_file) as conf:
-                text = conf.read()
-            data = _load_string(text)
+            with open(config_file) as fil:
+                data = load_file(fil)
             _set_attr(_configs, config_attributes, data)
         else:
             assert config_file.is_dir(), "There are existing paths that are neither files or directories?"
             # _set_attr(_configs, config_attributes, {})  # create empty dir
             # no empty dir is created, they will be done if a file is generated inside their sub-tree
             for child in config_file.iterdir():
-                recursive_load_file(child)  # recursive load
+                recursive_load_path(child)  # recursive load
 
     assert config_file.exists(), "This function should be called only on existing paths"
     if _configs is None:  # first loading
@@ -205,7 +160,7 @@ def _load_file(config_file: Path, reload: bool):
         _rebase(_common_path(config_file, _common_configs_path))  # moving so it can include the new configs
     if (not reload) and _loaded_paths.intersection(config_file.parents):
         return  # is already inside a loaded path (one of his parents was loaded)
-    recursive_load_file(config_file)
+    recursive_load_path(config_file)
     _loaded_paths = set(
         path for path in _loaded_paths
         if path not in config_file.parents  # select only the one that wasn't loaded
@@ -323,7 +278,7 @@ def ensure_file(config_file: Union[Path, str, bytes], reload: bool = False):
     >>> get(tmp_file)["answer"]
     54
     """
-    _load_file(_relative_to_config_directory(config_file), reload)
+    _load_path(_relative_to_config_directory(config_file), reload)
 
 
 def get(config: Union[str, PurePath]):
@@ -338,7 +293,7 @@ def get(config: Union[str, PurePath]):
     >>> remove(filename)
     """
     config = _relative_to_config_directory(config)
-    _load_file(_split_real_file(config), reload=False)  # ensure the file is loaded
+    _load_path(_split_real_file(config), reload=False)  # ensure the file is loaded
     try:
         return _get_attr(_configs, _split_config_attributes(config))
     except LookupError as e:
