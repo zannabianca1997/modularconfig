@@ -7,9 +7,11 @@ setup(
     version=version,
     description="Modular config loader",
     long_description=open("README.md").read(),
-    keywords='config',
+    keywords=['configs', 'modular'],
     author='Giuseppe Zanichelli',
     author_email='zannabianca199712@gmail.com',
+    url='https://github.com/zannabianca1997/modularconfig',
+    download_url='https://github.com/zannabianca1997/modularconfig/archive/0.2.tar.gz',
     license='BSD',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -17,7 +19,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
     ],
-    python_requires='~=3.8',  #todo: check minimal version
+    python_requires='>=3.6',  #todo: check minimal version
     include_package_data=True,
     zip_safe=True,
     install_requires=[],
