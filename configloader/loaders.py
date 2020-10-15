@@ -15,6 +15,7 @@ dangerous_loaders = {
     "python": False
 }
 
+
 def number(text: str) -> Union[int, float, complex]:
     """Try to load a number as a int, then as a float, then as a complex"""
     text = text.strip()
@@ -66,11 +67,26 @@ def load_yaml(text: str) -> object:
     return docs  # leave as a list of documents
 
 
+def load_python(text: str) -> Dict[str, object]:
+    """Load the globals defined in a python script
+    >>> dangerous_loaders["python"] = True
+    >>> load_python("a=5\\nb=4")
+    {'a': 5, 'b': 4}
+    """
+    if not dangerous_loaders["python"]:
+        raise ValueError("Python loader is disabled")
+    script_vars = {}
+    exec(text, script_vars)
+    del script_vars["__builtins__"]  # deleting buitins
+    return script_vars
+
+
 # disponible loaders
 loaders: Dict[str, Callable[[str], Any]] = {
     # dict types
     "json": json.loads,
     "yaml": load_yaml,
+    "python": load_python,
     # number types
     "int": int,
     "integer": int,
@@ -96,6 +112,7 @@ auto_loader: List[str] = [
     "bool",
     "none",
     "json",
+    "python",
     "text"
 ]
 

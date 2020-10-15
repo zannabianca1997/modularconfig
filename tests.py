@@ -257,7 +257,7 @@ class Yaml(TestCase):
             DangerousClass
         )
 
-
+#todo: write loaders tests
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)
