@@ -12,3 +12,7 @@ class LoadingError(ValueError):
 
 class LoaderMissingError(LoadingError):
     """A file requested a loader that is missing"""
+
+
+class DisabledLoaderError(LoadingError):
+    """A file requested a loader that's disabled"""

@@ -3,7 +3,7 @@ from typing import List, Callable, Any, Union, Dict, TextIO
 import json
 from base64 import b64decode
 
-from errors import LoaderMissingError, LoadingError
+from errors import LoaderMissingError, LoadingError, DisabledLoaderError
 
 try:
     import yaml
@@ -28,7 +28,7 @@ def number(text: str) -> Union[int, float, complex]:
             try:
                 return complex(text)
             except ValueError:
-                raise ValueError("Can't convert to a number") from None
+                raise LoadingError("Can't convert to a number") from None
 
 
 def boolean(text: str) -> bool:
@@ -38,28 +38,28 @@ def boolean(text: str) -> bool:
         return True
     if text == "false":
         return False
-    raise ValueError("Can't determine boolean value")
+    raise LoadingError("Can't determine boolean value")
 
 
 def none(text: str) -> None:
     """If the lowered text is empty, 'none' or 'null' None is returned"""
     text = text.strip().lower()
     if text not in {"", "none", "null"}:
-        raise ValueError("text is not empty, 'none' or 'null'")
+        raise LoadingError("text is not empty, 'none' or 'null'")
     return None
 
 
 def load_yaml(text: str) -> object:
     """If yaml is present will try to load text"""
     if not yaml:
-        raise ValueError("Yaml is not installed, can't be used in a file")
+        raise LoaderMissingError("Yaml is not installed, can't be used in a file")
     try:
         if dangerous_loaders["yaml_full_loader"]:
             docs = list(yaml.full_load_all(text))  # load the full yaml
         else:
             docs = list(yaml.safe_load_all(text))  # only safe features
     except yaml.YAMLError as e:
-        raise ValueError("Can't parse YAML") from e  # must use ValueError
+        raise LoadingError("Can't parse YAML") from e  # must use ValueError
     if len(docs) == 0:
         return {}
     if len(docs) == 1:
@@ -74,7 +74,7 @@ def load_python(text: str) -> Dict[str, object]:
     {'a': 5, 'b': 4}
     """
     if not dangerous_loaders["python"]:
-        raise ValueError("Python loader is disabled")
+        raise DisabledLoaderError("Python loader is disabled")
     script_vars = {}
     exec(text, script_vars)
     del script_vars["__builtins__"]  # deleting buitins
