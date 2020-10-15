@@ -3,11 +3,16 @@ from os import remove, mkdir, getcwd, rmdir
 from os.path import join, exists, samefile
 from shutil import rmtree
 from tempfile import mkdtemp, NamedTemporaryFile
-from unittest import TestCase, defaultTestLoader, skipIf
+from unittest import TestCase, defaultTestLoader, skipIf, expectedFailure, skip
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 import configloader
 
-example_json = {
+example_dict = {
     "Foo": "foo",
     "Bar": [1, 2, 3],
     "Nested": {
@@ -20,10 +25,16 @@ new_example_text = "Hello Universe"
 missing_file = "/I/Really/Hope/This/File/Does/Not/Exist/On/Any/System/Ever"
 
 
+class DangerousClass:
+    def __reduce__(self):
+        from os import system
+        return system, ('echo UNLIMITED POWERRR',)
+
+
 class SimpleFiles(TestCase):
     def setUp(self):
         json_file = NamedTemporaryFile(mode="w", delete=False)
-        json.dump(example_json, json_file)
+        json.dump(example_dict, json_file)
         self.json_file = json_file.name
 
         text_file = NamedTemporaryFile(mode="w", delete=False)
@@ -37,17 +48,17 @@ class SimpleFiles(TestCase):
     def test_json(self):
         self.assertDictEqual(
             configloader.get(self.json_file),
-            example_json
+            example_dict
         )
 
     def test_inside_attribute(self):
         self.assertEqual(
             configloader.get(join(self.json_file, "./Bar")),
-            example_json["Bar"]
+            example_dict["Bar"]
         )
         self.assertEqual(
             configloader.get(join(self.json_file, "./Nested/bar")),
-            example_json["Nested"]["bar"]
+            example_dict["Nested"]["bar"]
         )
 
     def test_text(self):
@@ -85,7 +96,7 @@ class HeadedFiles(TestCase):
     def setUp(self):
         json_in_text_file = NamedTemporaryFile(mode="w", delete=False)
         json_in_text_file.write("#type: text\n")
-        json.dump(example_json, json_in_text_file)  # writing valid json
+        json.dump(example_dict, json_in_text_file)  # writing valid json
         self.json_in_text_file = json_in_text_file.name
 
         wrong_headed_file = NamedTemporaryFile(mode="w", delete=False)
@@ -108,7 +119,7 @@ class HeadedFiles(TestCase):
         self.assertIsInstance(data, str)  # it should be loaded as a string
         self.assertEqual(
             data,
-            json.dumps(example_json)
+            json.dumps(example_dict)
         )
 
     def test_wrong_headed_file(self):
@@ -133,10 +144,10 @@ class ConfigDir(TestCase):
         with open(join(self.dir, "example.txt"), "w") as out:
             out.write(example_text)
         with open(join(self.dir, "./example.json"), "w") as out:
-            json.dump(example_json, out)
+            json.dump(example_dict, out)
         mkdir(join(self.dir, "Nested"))
         with open(join(self.dir, "./Nested/nested.json"), "w") as out:
-            json.dump(example_json, out)
+            json.dump(example_dict, out)
 
     def tearDown(self):
         rmtree(self.dir)
@@ -144,7 +155,7 @@ class ConfigDir(TestCase):
     def test_get_dir(self):
         self.assertDictEqual(
             configloader.get(self.dir),
-            {"example.txt": example_text, "example.json": example_json, "Nested": {'nested.json': example_json}}
+            {"example.txt": example_text, "example.json": example_dict, "Nested": {'nested.json': example_dict}}
         )
 
     def test_set_config_dir(self):
@@ -166,7 +177,7 @@ class ConfigDir(TestCase):
 
         self.assertEqual(
             configloader.get("bar"),
-            example_json["Nested"]["bar"]
+            example_dict["Nested"]["bar"]
         )
 
     def test_config_dir_context(self):
@@ -191,7 +202,7 @@ class ConfigDir(TestCase):
                 # we entered the json file, there is the "bar" here
                 self.assertEqual(
                     configloader.get("bar"),
-                    example_json["Nested"]["bar"]
+                    example_dict["Nested"]["bar"]
                 )
             # now we are again inside the directory, no "bar" here
             self.assertRaises(
@@ -199,6 +210,47 @@ class ConfigDir(TestCase):
                 configloader.get, "bar"
             )
 
+
+@skipIf(yaml is None, "No yaml detected")
+class Yaml(TestCase):
+    def setUp(self):
+        safe_yaml = NamedTemporaryFile(mode="w", delete=False)
+        safe_yaml.write("#type: yaml\n")
+        yaml.safe_dump(example_dict, safe_yaml)  # writing valid json
+        self.safe_yaml = safe_yaml.name
+
+        unsafe_yaml = NamedTemporaryFile(mode="w", delete=False)
+        unsafe_yaml.write("#type: yaml\n")
+        yaml.dump(DangerousClass(), unsafe_yaml, yaml.Dumper)
+        self.unsafe_yaml = unsafe_yaml.name
+
+    def tearDown(self):
+        remove(self.safe_yaml)
+        remove(self.unsafe_yaml)
+
+    def test_safe_load(self):
+        self.assertDictEqual(
+            configloader.get(self.safe_yaml),
+            example_dict
+        )
+
+    def test_safe_load_unsafe(self):
+        try:
+            configloader.get(self.unsafe_yaml)
+        except ValueError as e:
+            self.assertIsInstance(
+                e.__cause__,
+                yaml.YAMLError
+            )
+        else:
+            self.fail("Loaded unsafe yaml in safe mode")
+
+    @skip
+    def test_load_unsafe(self):
+        self.assertIsInstance(
+            configloader.get(self.unsafe_yaml),
+            DangerousClass
+        )
 
 
 
