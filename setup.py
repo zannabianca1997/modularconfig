@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '1.0'
+version = '0.2'
 
 setup(
     name='configloader',
@@ -15,7 +15,7 @@ setup(
     author_email='zannabianca199712@gmail.com',
     license='BSD',
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
