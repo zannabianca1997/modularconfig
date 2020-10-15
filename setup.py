@@ -7,6 +7,7 @@ setup(
     version=version,
     description="Modular config loader",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     keywords=['configs', 'modular'],
     author='Giuseppe Zanichelli',
     author_email='zannabianca199712@gmail.com',
