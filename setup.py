@@ -3,7 +3,7 @@ from setuptools import setup
 version = '0.2'
 
 setup(
-    name='configloader',
+    name='modularconfig',
     version=version,
     description="Modular config loader",
     long_description='\n'.join([
@@ -27,6 +27,6 @@ setup(
     extras_require={
         "yaml": ["pyyaml"]
     },
-    py_modules=['configloader'],
+    py_modules=['modularconfig'],
     test_suite='tests.test_suite',
 )
