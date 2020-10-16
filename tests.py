@@ -1,5 +1,7 @@
+import base64
 import json
 from itertools import product
+from locale import getpreferredencoding
 from os import remove, mkdir, getcwd
 from os.path import join, exists, samefile
 from shutil import rmtree
@@ -303,6 +305,17 @@ class BasicTypeTests(TestCase):
                         modularconfig.get(self.test_file),
                         num
                     )
+
+    def test_base64(self):
+        data = bytes([self.random.getrandbits(8) for _ in range(0, 2500)])
+        with open(self.test_file, "w") as fil:
+            fil.write(f"#type: base64 \n{base64.b64encode(data).decode(getpreferredencoding())}")
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(self.test_file),
+            data
+        )
+
 
 
 def test_suite():
