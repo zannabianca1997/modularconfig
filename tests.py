@@ -1,4 +1,5 @@
 import json
+from itertools import product
 from os import remove, mkdir, getcwd
 from os.path import join, exists, samefile
 from shutil import rmtree
@@ -27,7 +28,9 @@ new_example_text = "Hello Universe"
 missing_file = "/I/Really/Hope/This/File/Does/Not/Exist/On/Any/System/Ever"
 
 import random
+
 test_seeds = 100
+
 
 class DangerousClass:
     def __init__(self):
@@ -162,7 +165,6 @@ class ConfigDir(TestCase):
         )
 
     def test_set_config_dir(self):
-
         modularconfig.set_config_directory(self.dir.name)
         self.assertEqual(
             modularconfig.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
@@ -170,7 +172,6 @@ class ConfigDir(TestCase):
         )
 
     def test_relative_set_config_dir(self):
-
         modularconfig.set_config_directory(self.dir.name)
         modularconfig.set_config_directory("./example.json/Nested")
 
@@ -261,19 +262,47 @@ class BasicTypeTests(TestCase):
         remove(self.test_file)
 
     def test_int(self):
-        for type in ("int", "integer"):
-            for num in [0] + \
-                       [self.random.randint(-10000, 0) for _ in range(5)] + \
-                       [self.random.randint(1, 10000) for _ in range(5)]:
+        for type in ("int", "integer", "number"):
+            for num in ([0] +
+                        [self.random.randint(-10000, 0) for _ in range(5)] +  # negatives
+                        [self.random.randint(1, 10000) for _ in range(5)]):  # positives
                 with self.subTest(type=type, num=num):
                     with open(self.test_file, "w") as fil:
                         fil.write(f"#type: {type}\n{num}")
-                    modularconfig.ensure(self.test_file,reload=True)  # we modified it
+                    modularconfig.ensure(self.test_file, reload=True)  # we modified it
                     self.assertEqual(
                         modularconfig.get(self.test_file),
                         num
                     )
 
+    def test_float(self):
+        for type in ("float", "real", "number"):
+            for num in ([0.] +
+                        [(self.random.random() - 0.5) * 100 for _ in range(5)] +  # small reals
+                        [(self.random.random() - 0.5) * 10e30 for _ in range(5)]):  # big ones
+                with self.subTest(type=type, num=num):
+                    with open(self.test_file, "w") as fil:
+                        fil.write(f"#type: {type}\n{num}")
+                    modularconfig.ensure(self.test_file, reload=True)  # we modified it
+                    self.assertAlmostEqual(
+                        modularconfig.get(self.test_file),
+                        num
+                    )
+
+    def test_complex(self):
+        for type in ("complex", "number"):
+            for real, imag in product([0.] +
+                                      [(self.random.random() - 0.5) * 100 for _ in range(2)] +
+                                      [(self.random.random() - 0.5) * 10e30 for _ in range(2)], repeat=2):
+                num = real + imag * 1j
+                with self.subTest(type=type, num=num):
+                    with open(self.test_file, "w") as fil:
+                        fil.write(f"#type: {type}\n{num}")
+                    modularconfig.ensure(self.test_file, reload=True)  # we modified it
+                    self.assertAlmostEqual(
+                        modularconfig.get(self.test_file),
+                        num
+                    )
 
 
 def test_suite():
