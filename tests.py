@@ -13,7 +13,6 @@ except ImportError:
     yaml = None
 
 import modularconfig
-import modularconfig.config_manager
 
 example_dict = {
     "Foo": "foo",
@@ -155,7 +154,6 @@ class ConfigDir(TestCase):
         rmtree(self.dir)
 
     def test_get_dir(self):
-        modularconfig.get(self.dir)
         self.assertDictEqual(
             modularconfig.get(self.dir),
             {"example.txt": example_text, "example.json": example_dict, "Nested": {'nested.json': example_dict}}
@@ -186,13 +184,13 @@ class ConfigDir(TestCase):
     def test_config_dir_context(self):
         if samefile(self.dir, getcwd()):
             self.skipTest("Temporary directory is working directory")
-        old_config_dir = modularconfig._config_directory
+        old_config_dir = modularconfig.get_config_directory()
         with modularconfig.using_config_directory(self.dir):
             self.assertEqual(
                 modularconfig.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
                 example_text
             )
-        self.assertEqual(modularconfig._config_directory, old_config_dir)
+        self.assertEqual(modularconfig.get_config_directory(), old_config_dir)
 
     def test_nested_config_dir_context(self):
         with modularconfig.using_config_directory(self.dir):
