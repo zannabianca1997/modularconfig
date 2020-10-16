@@ -3,7 +3,7 @@ from os import remove, mkdir, getcwd
 from os.path import join, exists, samefile
 from shutil import rmtree
 from sys import modules
-from tempfile import mkdtemp, NamedTemporaryFile
+from tempfile import mkdtemp, NamedTemporaryFile, TemporaryDirectory
 from unittest import TestCase, defaultTestLoader, skipIf
 from importlib import reload, invalidate_caches
 
@@ -141,39 +141,35 @@ class HeadedFiles(TestCase):
 
 class ConfigDir(TestCase):
     def setUp(self):
-        self.dir = mkdtemp()
-        with open(join(self.dir, "example.txt"), "w") as out:
+        self.dir = TemporaryDirectory()
+        with open(join(self.dir.name, "example.txt"), "w") as out:
             out.write(example_text)
-        with open(join(self.dir, "./example.json"), "w") as out:
+        with open(join(self.dir.name, "./example.json"), "w") as out:
             json.dump(example_dict, out)
-        mkdir(join(self.dir, "Nested"))
-        with open(join(self.dir, "./Nested/nested.json"), "w") as out:
+        mkdir(join(self.dir.name, "Nested"))
+        with open(join(self.dir.name, "./Nested/nested.json"), "w") as out:
             json.dump(example_dict, out)
 
     def tearDown(self):
-        rmtree(self.dir)
+        self.dir.cleanup()
 
     def test_get_dir(self):
         self.assertDictEqual(
-            modularconfig.get(self.dir),
+            modularconfig.get(self.dir.name),
             {"example.txt": example_text, "example.json": example_dict, "Nested": {'nested.json': example_dict}}
         )
 
     def test_set_config_dir(self):
-        if samefile(self.dir, getcwd()):
-            self.skipTest("Temporary directory is working directory")
 
-        modularconfig.set_config_directory(self.dir)
+        modularconfig.set_config_directory(self.dir.name)
         self.assertEqual(
             modularconfig.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
             example_text
         )
 
     def test_relative_set_config_dir(self):
-        if samefile(self.dir, getcwd()):
-            self.skipTest("Temporary directory is working directory")
 
-        modularconfig.set_config_directory(self.dir)
+        modularconfig.set_config_directory(self.dir.name)
         modularconfig.set_config_directory("./example.json/Nested")
 
         self.assertEqual(
@@ -182,10 +178,8 @@ class ConfigDir(TestCase):
         )
 
     def test_config_dir_context(self):
-        if samefile(self.dir, getcwd()):
-            self.skipTest("Temporary directory is working directory")
         old_config_dir = modularconfig.get_config_directory()
-        with modularconfig.using_config_directory(self.dir):
+        with modularconfig.using_config_directory(self.dir.name):
             self.assertEqual(
                 modularconfig.get("example.txt"),  # we should be able to access it directly, even if it isn't the cwd
                 example_text
@@ -193,7 +187,7 @@ class ConfigDir(TestCase):
         self.assertEqual(modularconfig.get_config_directory(), old_config_dir)
 
     def test_nested_config_dir_context(self):
-        with modularconfig.using_config_directory(self.dir):
+        with modularconfig.using_config_directory(self.dir.name):
             # now we are inside the directory, no "bar" here
             self.assertRaises(
                 modularconfig.ConfigNotFoundError,
@@ -217,12 +211,12 @@ class Yaml(TestCase):
     def setUp(self):
         safe_yaml = NamedTemporaryFile(mode="w", delete=False)
         safe_yaml.write("#type: yaml\n")
-        yaml.safe_dump(example_dict, safe_yaml)  # writing valid json
+        yaml.safe_dump(example_dict, safe_yaml)  # writing valid yaml
         self.safe_yaml = safe_yaml.name
 
         unsafe_yaml = NamedTemporaryFile(mode="w", delete=False)
         unsafe_yaml.write("#type: yaml\n")
-        yaml.dump(DangerousClass(), unsafe_yaml)
+        yaml.dump(DangerousClass(), unsafe_yaml)  # writing yaml that need full loader to open
         self.unsafe_yaml = unsafe_yaml.name
 
     def tearDown(self):
@@ -255,7 +249,7 @@ class Yaml(TestCase):
             DangerousClass
         )
 
-#todo: write loaders tests
+
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)
