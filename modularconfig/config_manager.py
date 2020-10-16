@@ -3,8 +3,8 @@ from logging import getLogger
 from pathlib import Path, PurePath
 from typing import Dict, Iterator, Union, overload, Set, List
 
-from errors import ConfigNotFoundError, ConfigFileNotFoundError
-from loaders import load_file
+from modularconfig.errors import ConfigNotFoundError, ConfigFileNotFoundError
+from modularconfig.loaders import load_file
 
 logger = getLogger(__name__)
 

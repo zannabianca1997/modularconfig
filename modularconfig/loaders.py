@@ -3,7 +3,7 @@ from typing import List, Callable, Any, Union, Dict, TextIO
 import json
 from base64 import b64decode
 
-from errors import LoaderMissingError, LoadingError, DisabledLoaderError
+from modularconfig.errors import LoaderMissingError, LoadingError, DisabledLoaderError
 
 try:
     import yaml
