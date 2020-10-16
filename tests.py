@@ -2,13 +2,10 @@ import base64
 import json
 from itertools import product
 from locale import getpreferredencoding
-from os import remove, mkdir, getcwd
-from os.path import join, exists, samefile
-from shutil import rmtree
-from sys import modules
-from tempfile import mkdtemp, NamedTemporaryFile, TemporaryDirectory
+from os import remove, mkdir
+from os.path import join, exists
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import TestCase, defaultTestLoader, skipIf
-from importlib import reload, invalidate_caches
 
 try:
     import yaml
