@@ -26,6 +26,8 @@ new_example_text = "Hello Universe"
 
 missing_file = "/I/Really/Hope/This/File/Does/Not/Exist/On/Any/System/Ever"
 
+import random
+test_seeds = 100
 
 class DangerousClass:
     def __init__(self):
@@ -248,6 +250,29 @@ class Yaml(TestCase):
             modularconfig.get(self.unsafe_yaml),
             DangerousClass
         )
+
+
+class BasicTypeTests(TestCase):
+    def setUp(self):
+        self.test_file = NamedTemporaryFile(mode="w", delete=False).name
+        self.random = random.Random(test_seeds)
+
+    def tearDown(self) -> None:
+        remove(self.test_file)
+
+    def test_int(self):
+        for type in ("int", "integer"):
+            for num in [0] + \
+                       [self.random.randint(-10000, 0) for _ in range(5)] + \
+                       [self.random.randint(1, 10000) for _ in range(5)]:
+                with self.subTest(type=type, num=num):
+                    with open(self.test_file, "w") as fil:
+                        fil.write(f"#type: {type}\n{num}")
+                    modularconfig.ensure(self.test_file,reload=True)  # we modified it
+                    self.assertEqual(
+                        modularconfig.get(self.test_file),
+                        num
+                    )
 
 
 
