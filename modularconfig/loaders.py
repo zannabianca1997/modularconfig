@@ -120,6 +120,7 @@ if yaml:
     auto_loader[auto_loader.index("json")] = "yaml"  # substituting json with is superset yaml
 
 
+# todo: maybe the file descriptor should be passed to the loaders? this will permit them to read the file sequentially
 def load_file(file: TextIO):
     """Load a python object from the file content
     Try all the loaders from loaders in order
@@ -139,23 +140,22 @@ def load_file(file: TextIO):
 
     Logs the failed tries with the logging module, with level logging.DEBUG
     """
-    text = file.read()
-    if text.startswith("#type:"):  # a loader is specified
-        splits = text.split("\n", maxsplit=1)  # taking away first line
-        if len(splits) == 1:  # only one line, loaders is given but data is empty
-            data_type = splits[0]
-            text = ""
-        else:
-            data_type, text = splits
-        data_type = data_type[6:].strip()  # getting the given type
+    head = file.read(6)
+    if head == "#type:":  # a loader is specified
+        data_type = file.readline().strip()
         if data_type in loaders:
-            data = loaders[data_type](text)
+            data = loaders[data_type](
+                file.read()
+            )
         else:
             raise LoaderMissingError(data_type)
-    else:
+    else:  # no loader specified, try to autodetect
+        text = head + file.read()
         for name in auto_loader:
             try:
-                data = loaders[name](text)
+                data = loaders[name](
+                    text
+                )
             except ValueError:  # loader didn't work
                 continue  # proceed to next loader
             else:  # loaded worked
