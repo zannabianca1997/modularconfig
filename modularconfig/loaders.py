@@ -159,7 +159,7 @@ def load_file(file: TextIO):
             except ValueError:  # loader didn't work
                 continue  # proceed to next loader
             else:  # loaded worked
-                break  # stop trying, data was found
+                break  # stop trying, the data was succesfully loaded
         else:  # no loader worked
             # usually this is never throw thanks to text loader
             raise LoadingError("None of the loaders worked, try to add type specification to see the error")
