@@ -1,3 +1,4 @@
+import binascii
 from io import BytesIO
 from locale import getpreferredencoding
 from typing import List, Callable, Any, Union, Dict, TextIO, Tuple, Iterator
@@ -121,6 +122,24 @@ def load_text(text: str, **options) -> str:
     return text
 
 
+def load_base64(text: str, **options) -> bytes:
+    """Load the text as a base64 object"""
+    if "altchars" in options:
+        altchars = options["altchars"]
+    else:
+        altchars = None
+    if "validate" in options:
+        if options["validate"]:  # a value was specified
+            validate = load_boolean(options["validate"])
+        else:
+            validate = True  # use as a flag
+    else:
+        validate = False
+    try:
+        return b64decode(text, altchars=altchars, validate=validate)
+    except binascii.Error as e:
+        raise LoadingError("Can't decode base64") from e
+
 # disponible loaders
 loaders: Dict[str, Callable[[str], Any]] = {
     # dict types
@@ -143,7 +162,7 @@ loaders: Dict[str, Callable[[str], Any]] = {
     # general string loader
     "text": load_text,
     # base64 loader, for small binary pieces. If you need big binary data, they should not be in the configs
-    "base64": b64decode
+    "base64": load_base64
 }
 
 # if no type is specified this loaders will be tried in this order
@@ -299,7 +318,9 @@ def load_file(file: BytesIO):
     """
     head = file.read(6)
     if head == "#type:".encode("utf-8"):  # a loader is specified?
-        data_type, options = split_options(file.readline().decode("utf-8"))
+        data_type, options = split_options(
+            file.readline().decode("utf-8")[:-1]  # options encoding is utf-8, indexing to strip the newline
+        )
         # detect encoding
         if "encoding" in options:
             encoding = options["encoding"].strip()

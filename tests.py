@@ -305,13 +305,39 @@ class BasicTypeTests(TestCase):
 
     def test_base64(self):
         data = bytes([self.random.getrandbits(8) for _ in range(0, 2500)])
-        with open(self.test_file, "w") as fil:
-            fil.write(f"#type: base64 \n{base64.b64encode(data).decode(getpreferredencoding())}")
+        with open(self.test_file, "w", encoding="ascii") as fil:
+            fil.write(f"#type: base64:encoding=ascii \n{base64.b64encode(data).decode('ascii')}")
         modularconfig.ensure(self.test_file, reload=True)  # we modified it
         self.assertEqual(
             modularconfig.get(self.test_file),
             data
         )
+
+    def test_base64_options(self):
+        data = bytes([self.random.getrandbits(8) for _ in range(0, 2500)])
+        with open(self.test_file, "w", encoding="ascii") as fil:
+            fil.write(
+                "#type: base64:encoding=ascii;altchars=[]\n"
+                f"{base64.b64encode(data, altchars=b'[]').decode('ascii')}"
+            )
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(self.test_file),
+            data
+        )
+
+    def test_base64_wrong_options(self):
+        data = bytes([self.random.getrandbits(8) for _ in range(0, 2500)])
+        with open(self.test_file, "w", encoding="ascii") as fil:
+            fil.write(
+                "#type: base64:encoding=ascii;altchars=[]\n"
+                f"{base64.b64encode(data, altchars=b'<>').decode('ascii')}"
+            )
+        self.assertRaises(
+            modularconfig.LoadingError,
+            modularconfig.ensure, self.test_file, reload=True
+        )
+
 
 class Encoding(TestCase):
     def setUp(self):
