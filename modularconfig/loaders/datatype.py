@@ -25,8 +25,7 @@ def expand_token(tokens: Iterator[Union[str, object]], token_str: str, token_obj
 
 def collapse_token(tokens: Iterator[Union[str, object]], token_str: str, token_obj: object) \
     -> Iterator[Union[str, object]]:
-    """
-    inverse the token expansion
+    """Inverse the token expansion
 
     >>> list(collapse_token(iter(['hello for a ', 3, ' of a ', 3, '']), "friend", 3))
     ['hello for a friend of a friend']
@@ -50,17 +49,17 @@ def collapse_token(tokens: Iterator[Union[str, object]], token_str: str, token_o
         yield cum_string
 
 
-def load(datatype: str) -> Tuple[str, Dict[str, str]]:
+def load(datatype: str, options: Dict[str, str]) -> Tuple[str, Dict[str, str]]:
     """Split the options from the datatype
 
-    >>> load("text ")
+    >>> load("text ", {})
     ('text', {})
-    >>> load("text:encoding=latin1")
+    >>> load("text:encoding=latin1", {})
     ('text', {'encoding': 'latin1'})
-    >>> load('  loader : a = 5; b = long ass string  ; flag')
+    >>> load('  loader : a = 5; b = long ass string  ; flag', {})
     ('loader', {'a': ' 5', 'b': ' long ass string  ', 'flag': ''})
     >>> load(
-    ...     "loader : surprise =can use escape sequences \\\\=, \\\\;, \\\\n, \\\\\\\\t"
+    ...     "loader : surprise =can use escape sequences \\\\=, \\\\;, \\\\n, \\\\\\\\t", {}
     ... )[1]["surprise"]
     'can use escape sequences =, ;, \\n, \\\\t'
     """
