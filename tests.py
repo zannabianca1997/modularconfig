@@ -1,7 +1,6 @@
 import base64
 import json
 from itertools import product
-from locale import getpreferredencoding
 from os import remove, mkdir
 from os.path import join, exists
 from tempfile import NamedTemporaryFile, TemporaryDirectory
