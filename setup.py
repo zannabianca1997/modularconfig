@@ -27,6 +27,6 @@ setup(
     extras_require={
         "yaml": ["pyyaml"]
     },
-    packages=['modularconfig'],
+    packages=['modularconfig', 'modularconfig.loaders'],
     test_suite='tests.test_suite',
 )
