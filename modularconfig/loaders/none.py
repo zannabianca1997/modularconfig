@@ -5,7 +5,7 @@ name = "none"
 aliases = ["null"]
 
 
-def load_none(text: str, options: Dict[str, str]) -> None:
+def load(text: str, options: Dict[str, str]) -> None:
     """If the lowered text is empty, 'none' or 'null' None is returned"""
     text = text.strip().lower()
     if text not in {"", "none", "null"}:

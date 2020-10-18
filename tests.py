@@ -225,14 +225,14 @@ class Yaml(TestCase):
         remove(self.unsafe_yaml)
 
     def test_safe_load(self):
-        modularconfig.loaders.dangerous_loaders["yaml_full_loader"] = False
+        modularconfig.loaders.dangerous_loaders["yaml"] = False
         self.assertDictEqual(
             modularconfig.get(self.safe_yaml),
             example_dict
         )
 
     def test_safe_load_unsafe(self):
-        modularconfig.loaders.dangerous_loaders["yaml_full_loader"] = False
+        modularconfig.loaders.dangerous_loaders["yaml"] = False
         try:
             modularconfig.get(self.unsafe_yaml)
         except ValueError as e:
@@ -244,7 +244,7 @@ class Yaml(TestCase):
             self.fail("Loaded unsafe yaml in safe mode")
 
     def test_load_unsafe(self):
-        modularconfig.loaders.dangerous_loaders["yaml_full_loader"] = True
+        modularconfig.loaders.dangerous_loaders["yaml"] = True
         self.assertIsInstance(
             modularconfig.get(self.unsafe_yaml),
             DangerousClass
@@ -260,7 +260,7 @@ class BasicTypeTests(TestCase):
         remove(self.test_file)
 
     def test_int(self):
-        for type in ("int.py", "integer", "number"):
+        for type in ("int", "integer", "number"):
             for num in ([0] +
                         [self.random.randint(-10000, 0) for _ in range(5)] +  # negatives
                         [self.random.randint(1, 10000) for _ in range(5)]):  # positives
@@ -364,6 +364,110 @@ class Encoding(TestCase):
             modularconfig.get(self.test_file),
             data
         )
+
+class ModularLoaders(TestCase):
+    def setUp(self):
+        self.test_file = NamedTemporaryFile(mode="w", delete=False).name
+
+    def tearDown(self) -> None:
+        remove(self.test_file)
+
+    def test_add_loader(self):
+        class MyLoader:
+            def __init__(self):
+                self.name = "myloader"
+
+            def load(self, text, options):
+                if text == "answer":
+                    return 42
+                else:
+                    return "What???"
+
+        modularconfig.loaders.register_loader(MyLoader())
+        with open(self.test_file, "w") as fil:
+            fil.write(f"#type: myloader\nanswer")
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(self.test_file),
+            42
+        )
+
+    def test_add_dangerous_loader(self):
+        class MyLoader:
+            def __init__(self):
+                self.name = "my_dangerous_loader"
+
+            def dangerous_load(self, text, options):
+                return "Spooooky"
+        modularconfig.loaders.register_loader(MyLoader())
+        with self.subTest("Disabled Loader"):
+            with open(self.test_file, "w") as fil:
+                fil.write(f"#type: my_dangerous_loader\nanswer")
+            self.assertRaises(
+                modularconfig.DisabledLoaderError,
+                modularconfig.ensure, self.test_file, reload=True
+            )
+        with self.subTest("Enabled Loader"):
+            modularconfig.loaders.dangerous_loaders["my_dangerous_loader"] = True
+            modularconfig.ensure(self.test_file, reload=True)  # we modified it
+            self.assertEqual(
+                modularconfig.get(self.test_file),
+                "Spooooky"
+            )
+
+    def test_add_dangerous_with_safe_loader(self):
+        class MyLoader:
+            def __init__(self):
+                self.name = "my_dangerous_with_safe_loader"
+
+            def load(self, text, options):
+                if text == "answer":
+                    return 42
+                else:
+                    return "What???"
+
+            def dangerous_load(self, text, options):
+                return "Spooooky"
+        modularconfig.loaders.register_loader(MyLoader())
+        with self.subTest("Disabled Loader"):
+            with open(self.test_file, "w") as fil:
+                fil.write(f"#type: my_dangerous_with_safe_loader\nanswer")
+            modularconfig.loaders.dangerous_loaders["my_dangerous_with_safe_loader"] = False
+            modularconfig.ensure(self.test_file, reload=True)  # we modified it
+
+            # should use safe loading
+            self.assertEqual(
+                modularconfig.get(self.test_file),
+                42
+            )
+        with self.subTest("Enabled Loader"):
+            modularconfig.loaders.dangerous_loaders["my_dangerous_with_safe_loader"] = True
+            modularconfig.ensure(self.test_file, reload=True)  # we modified it
+
+            # should use dangerous loading
+            self.assertEqual(
+                modularconfig.get(self.test_file),
+                "Spooooky"
+            )
+
+    def test_add_with_aliases(self):
+        class MyLoader:
+            def __init__(self):
+                self.name = "my_aliased_loader"
+                self.aliases = ["other_name"]
+
+            def load(self, text, options):
+                return "Aliased"
+        with open(self.test_file, "w") as fil:
+            fil.write(f"#type: other_name\nanswer")
+        modularconfig.loaders.register_loader(MyLoader())
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(self.test_file),
+            "Aliased"
+        )
+
+
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)
