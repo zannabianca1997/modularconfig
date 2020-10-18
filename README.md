@@ -12,6 +12,7 @@ Given the directory structure
        |-nested
        | |-answer
        | |-precise_answer
+       |-myformat
        
 And the given documents:
 
@@ -40,6 +41,11 @@ nested/answer:
 nested/precise_answer:
 
     42.06
+   
+myformat
+
+    #type: myloader
+    >>>put data here<<
     
 All is accessible with a simple command:
    
@@ -55,7 +61,15 @@ File type specification is not necessary:
 
     modularconfig.get("/opt/myapp/config/nested/answer")  # 42, type == int
     modularconfig.get("/opt/myapp/config/nested/precise_answer")  # 42.01, type == float
+
+The default order in which the formats will be tried is in modularconfig.loaders.auto_loaders.
+
+Filetype can include options for the loader:
     
+    #type: <loader>: <opt1> =<optval>; <opt2>=<optval>;<flag1>; etc...
+    
+An important option is "encoding": the rest of the file will be decoded using the encoding specified. Type specification is always in UTF-8
+
 A base directory can be choosed:
 
     modularconfig.set_config_directory("/opt/myapp/config")
@@ -85,23 +99,51 @@ Filetypes supported:
 
   - json
   - python [disabled]
-  - yaml [if pyyaml is installed, use safe_load by default, can switch by setting dangerous_loaders["yaml_full_loader"]]
+  - yaml [if pyyaml is installed, use safe_load by default, can switch by setting dangerous_loaders["yaml"]]
   - int, integer
   - float, real
   - complex
   - number  [try to parse as a int, then float, then complex]
   - bool, boolean
   - none, null [always parse to None]
-  - base64
+  - base64 [will use the altchars and validate options if given]
   - text
   
 Other loaders can be installed
     
-    def myloader(text: str) -> object:
-      ...
+    class MyLoader:
+        def __init__(self):
+            self.name = "myloader"
+            self.aliases = ["other_name"]  # optional
     
-    modularconfig.loaders.loaders["mytype"] = myloaders
+        def load(self, text, options):
+            if text == "answer":
+                return 42
+            else:
+                return "What???"
+    modularconfig.loaders.register_loader(MyLoader())
     
 And the order of autodetect can be changed
 
     modularconfig.loaders.auto_loader = ["myloader", "json", "text"]
+    
+A loader can specify a more powerful loader, but that should not be used with untrusted input:
+
+    class MyLoader:
+        def __init__(self):
+            self.name = "myloader"
+            self.aliases = ["other_name"]  # optional
+         
+        def load(self, text, options):
+            return "safe parse"
+    
+        def dangerous_load(self, text, options):
+            return "spooky parse"
+    modularconfig.loaders.register_loader(MyLoader())
+   
+The "load" method will still be used if the flag in modularconfig.loaders.dangerous_loaders isn't set:
+
+    modularconfig.get("/opt/myapp/config/myformat")  # return "safe parse"
+    modularconfig.loaders.dangerous_loaders["myloader"] = True
+    modularconfig.ensure("/opt/myapp/config/nested", reload=True)
+    modularconfig.get("/opt/myapp/config/myformat")  # return "spooky parse"
