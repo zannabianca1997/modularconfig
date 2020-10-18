@@ -312,7 +312,7 @@ def load_file(file: BytesIO):
     >>> load_file(BytesIO(b"#type: json \\n InvalidJson"))
     Traceback (most recent call last):
       ...
-    json.decoder.JSONDecodeError: Expecting value: line 1 column 2 (char 1)
+    modularconfig.errors.LoadingError: Can't decode json
 
     Logs the failed tries with the logging module, with level logging.DEBUG
     """
