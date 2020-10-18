@@ -50,7 +50,7 @@ def _split_real_file(config: PurePath) -> Path:
         existing_file = existing_file.parent
     if existing_file.is_file():
         return existing_file
-    raise ConfigFileNotFoundError(f"{config} do not refere to any file")
+    raise ConfigFileNotFoundError(f"{config} do not refer to any file")
 
 
 def _split_config_attributes(config: PurePath) -> PurePath:
