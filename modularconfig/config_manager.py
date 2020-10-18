@@ -139,7 +139,7 @@ def _load_path(config_file: Path, reload: bool):
             return  # this path is already loaded
         config_attributes = _split_config_attributes(config_file)
         if config_file.is_file():
-            with open(config_file) as fil:
+            with open(config_file, "br") as fil:
                 data = load_file(fil)
             _set_attr(_configs, config_attributes, data)
         else:

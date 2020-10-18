@@ -16,3 +16,7 @@ class LoaderMissingError(LoadingError):
 
 class DisabledLoaderError(LoadingError):
     """A file requested a loader that's disabled"""
+
+
+class OptionParseError(LoadingError):
+    """Datatype options were malformed"""

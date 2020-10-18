@@ -313,7 +313,32 @@ class BasicTypeTests(TestCase):
             data
         )
 
+class Encoding(TestCase):
+    def setUp(self):
+        self.test_file = NamedTemporaryFile(mode="w", delete=False).name
 
+    def tearDown(self) -> None:
+        remove(self.test_file)
+
+    def test_latin1(self):
+        data = "Quì usiamo glì accénti èàìòù"
+        with open(self.test_file, "w", encoding="latin1") as fil:
+            fil.write(f"#type: text: encoding=latin1\n{data}")
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(self.test_file),
+            data
+        )
+
+    def test_wrong_encoding(self):
+        data = "this is chinese: 汉字"
+        with open(self.test_file, "w") as fil:
+            fil.write(f"#type: text: encoding=latin1\n{data}")
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertNotEqual(
+            modularconfig.get(self.test_file),
+            data
+        )
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)
