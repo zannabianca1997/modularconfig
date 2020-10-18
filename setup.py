@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '0.2.2-alpha'
+version = '0.2.3-alpha'
 
 setup(
     name='modularconfig',
@@ -12,7 +12,7 @@ setup(
     author='Giuseppe Zanichelli',
     author_email='zannabianca199712@gmail.com',
     url='https://github.com/zannabianca1997/modularconfig',
-    download_url='https://github.com/zannabianca1997/modularconfig/archive/v_0.2.2-alpha.tar.gz',
+    download_url='https://github.com/zannabianca1997/modularconfig/archive/v_0.2.3-alpha.tar.gz',
     license='BSD',
     classifiers=[
         'Development Status :: 3 - Alpha',
