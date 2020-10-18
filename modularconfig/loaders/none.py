@@ -1,7 +1,8 @@
 from typing import Dict
 from modularconfig.errors import LoadingError
 
-names = ["null", "none"]
+name = "none"
+aliases = ["null"]
 
 
 def load_none(text: str, options: Dict[str, str]) -> None:

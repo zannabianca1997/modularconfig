@@ -1,7 +1,7 @@
 from typing import Dict
 from modularconfig.errors import LoadingError, LoaderMissingError
 
-names = ["yaml"]
+name = "yaml"
 
 try:
     import yaml

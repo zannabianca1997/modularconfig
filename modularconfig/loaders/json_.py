@@ -3,7 +3,7 @@ from modularconfig.errors import LoadingError
 
 from json import loads, JSONDecodeError
 
-names = ["json"]
+name = "json"
 
 
 def load(text: str, options: Dict[str, str]) -> object:

@@ -6,7 +6,8 @@ from modularconfig.errors import LoadingError
 
 from .bool import load as load_boolean
 
-names = ["base64", "b64"]
+name = "base64"
+aliases = ["b64"]
 
 
 def load(text: str, options: Dict[str, str]) -> bytes:

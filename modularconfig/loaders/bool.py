@@ -1,7 +1,8 @@
 from typing import Dict
 from modularconfig.errors import LoadingError
 
-names = ["bool", "boolean"]
+name = "bool"
+aliases = ["boolean"]
 
 
 def load(text: str, options: Dict[str, str]) -> bool:

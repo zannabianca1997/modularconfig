@@ -1,7 +1,8 @@
 from typing import Dict
 from modularconfig.errors import LoadingError
 
-names = ["int", "integer"]
+name = "int"
+aliases = ["integer"]
 
 
 def load(text: str, options: Dict[str, str]) -> int:

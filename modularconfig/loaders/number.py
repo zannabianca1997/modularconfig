@@ -1,7 +1,8 @@
 from typing import Dict, Union
 from modularconfig.errors import LoadingError
 
-names = ["number", "num"]
+name = "number"
+aliases = ["num"]
 
 
 def load(text: str, options: Dict[str, str]) -> Union[int, float, complex]:

@@ -260,7 +260,7 @@ class BasicTypeTests(TestCase):
         remove(self.test_file)
 
     def test_int(self):
-        for type in ("int", "integer", "number"):
+        for type in ("int.py", "integer", "number"):
             for num in ([0] +
                         [self.random.randint(-10000, 0) for _ in range(5)] +  # negatives
                         [self.random.randint(1, 10000) for _ in range(5)]):  # positives

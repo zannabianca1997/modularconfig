@@ -1,7 +1,7 @@
 from typing import Dict
 from modularconfig.errors import LoadingError
 
-names = ["python"]
+name = "python"
 
 
 def dangerous_load(text: str, options) -> Dict[str, object]:

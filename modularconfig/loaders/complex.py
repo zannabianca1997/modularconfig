@@ -1,7 +1,7 @@
 from typing import Dict
 from modularconfig.errors import LoadingError
 
-names = ["complex"]
+name = "complex"
 
 
 def load(text: str, options: Dict[str, str]) -> complex:

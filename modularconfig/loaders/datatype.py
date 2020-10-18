@@ -2,7 +2,7 @@ from typing import Iterator, Union, Tuple, Dict
 
 from modularconfig.errors import OptionParseError
 
-names = ["datatype"]
+name = "datatype"
 
 def expand_token(tokens: Iterator[Union[str, object]], token_str: str, token_obj: object) \
     -> Iterator[Union[str, object]]:

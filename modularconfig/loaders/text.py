@@ -1,6 +1,6 @@
 from typing import Dict
 
-names = ["text"]
+name = "text"
 
 
 def load(text: str, options: Dict[str, str]) -> str:
