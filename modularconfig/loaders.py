@@ -77,6 +77,12 @@ def load_none(text: str, **options) -> None:
         raise LoadingError("text is not empty, 'none' or 'null'")
     return None
 
+def load_json(text: str, **options) -> object:
+    """Load the text as a json object"""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        raise LoadingError("Can't decode json") from e
 
 def load_yaml(text: str, **options) -> object:
     """If yaml is present will try to load text"""
@@ -118,7 +124,7 @@ def load_text(text: str, **options) -> str:
 # disponible loaders
 loaders: Dict[str, Callable[[str], Any]] = {
     # dict types
-    "json": json.loads,
+    "json": load_json,
     "yaml": load_yaml,
     "python": load_python,
     # number types

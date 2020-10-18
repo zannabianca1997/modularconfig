@@ -129,7 +129,7 @@ class HeadedFiles(TestCase):
 
     def test_wrong_headed_file(self):
         self.assertRaises(
-            json.JSONDecodeError, modularconfig.get, self.wrong_headed_file
+            modularconfig.LoadingError, modularconfig.get, self.wrong_headed_file
         )
 
     def test_strange_header(self):
