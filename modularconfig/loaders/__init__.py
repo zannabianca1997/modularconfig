@@ -131,11 +131,12 @@ def load_file(file: BytesIO):
     head = file.read(6)
     if head == "#type:".encode("utf-8"):  # a loader is specified?
         data_type, options = load_datatype(
-            file.readline().decode("utf-8")[:-1]  # options encoding is utf-8, indexing to strip the newline
+            file.readline().decode("utf-8")[:-1],  # options encoding is utf-8, indexing to strip the newline
+            {}
         )
         # detect encoding
         if "encoding" in options:
-            encoding = options["encoding"].strip()
+            encoding = options.pop("encoding").strip()
         else:
             encoding = getpreferredencoding()
         # if an encoding is specified, use that
