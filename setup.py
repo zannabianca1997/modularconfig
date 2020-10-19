@@ -20,7 +20,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
     ],
-    python_requires='>=3.6',  #todo: check minimal version
+    python_requires='>=3.6',  # todo: check minimal version
     include_package_data=True,
     zip_safe=True,
     install_requires=[],
