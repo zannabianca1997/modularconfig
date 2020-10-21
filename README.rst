@@ -90,7 +90,7 @@ The available loaders are:
 
   - json
   - yaml [if pyyaml is installed, throw a MissingLoaderError otherwise]
-  - python [disabled by default, see `Dangerous Loaders`]
+  - python [disabled by default, see `Dangerous Loaders`_]
 
 - Primitive types:
 
@@ -100,3 +100,44 @@ The available loaders are:
   - number, num [try in order to parse the text as a int, then a float, then a complex number]
   - base64 [accept altchars and validate as options]
   - text
+
+Users can define their own loaders:
+
+.. code-block:: python
+
+    class myloader:
+        name = "myloader"
+        aliases = ["other_name"]  # optional
+
+        # At least one of the following methods must be defined:
+        def load(self, text:str, options: Dict[str, str]):
+            # parse untrusted text, safely
+            return parsed_obj
+
+        def dangerous_load(self, text:str, options: Dict[str, str]):
+            # parse trusted text, can have side-effects
+            return parsed_obj
+
+    modularconfig.loaders.register_loader(myloader())
+
+Dangerous Loaders
+-----------------
+
+Some loader are too powerful to be used on untrusted input (e.g. ``python``). To make sure that no side effect is caused by config files those loaders are disabled by default:
+
+``pyscript.py``::
+
+    #type: python
+    a=4
+    b=5
+
+>>> modularconfig.get("pyscript.py")
+Traceback (most recent call last):
+  ...
+modularconfig.errors.DisabledLoaderError: 'python' loader is disabled. Set dangerous_loaders['python'] to True to enable
+>>> modularconfig.loaders.dangerous_loaders["python"] = True
+>>> modularconfig.get("pyscript.py")
+{'a': 4, 'b': 5}
+
+Some loaders (like yaml) can offer both functionality: a safe subset and a full loader. In that case the full loader will be used only if the flag is True
+
