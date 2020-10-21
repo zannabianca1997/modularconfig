@@ -41,9 +41,12 @@ def load(text: str, options: Dict[str, str]) -> configparser.ConfigParser:
     parsed_opt = {}
     for bool_opt in ("allow_no_value", "strict", "empty_lines_in_values"):
         if bool_opt in options:
-            parsed_opt[bool_opt] = load_boolean(
-                options[bool_opt], {}
-            )
+            if options[bool_opt]:
+                parsed_opt[bool_opt] = load_boolean(
+                    options[bool_opt], {}
+                )
+            else:
+                parsed_opt[bool_opt] = True  # no value, use as a flag
     for str_tuple_opt in ("delimiters", "comment_prefixes", "inline_comment_prefixes"):
         if str_tuple_opt in options:
             parsed_opt[str_tuple_opt] = parse_tuple_of_strings(options[str_tuple_opt])
