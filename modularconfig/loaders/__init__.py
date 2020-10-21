@@ -11,7 +11,7 @@ from modularconfig.loaders.datatype import load as load_datatype
 from logging import getLogger
 logger = getLogger(__name__)
 
-dangerous_loaders = {}
+dangerous_loaders: Dict[str, bool] = {}
 loaders: Dict[str, Callable[[str, Dict[str, str]], Any]] = {}
 
 
@@ -79,7 +79,6 @@ def register_loader(loader, use_dangerous: bool = False):
         loaders[alias] = load_func
 
 
-
 for file_name in Path(__file__).parent.glob("*.py"):
     if file_name.name == "__init__.py":
         continue  # skip this file
@@ -87,7 +86,6 @@ for file_name in Path(__file__).parent.glob("*.py"):
     register_loader(
         import_module(f"modularconfig.loaders.{file_name.stem}")
     )
-
 
 
 # if no type is specified this loaders will be tried in this order
@@ -126,12 +124,23 @@ def load_file(file: BytesIO):
       ...
     modularconfig.errors.LoadingError: Can't decode json
 
+    Dangerous loaders are disabled by default
+    >>> load_file(BytesIO(b"#type: python\\na=4\\nb=5"))
+    Traceback (most recent call last):
+      ...
+    modularconfig.errors.DisabledLoaderError: 'python' loader is disabled. Set dangerous_loaders['python'] to True to enable
+    >>> dangerous_loaders["python"] = True
+    >>> load_file(BytesIO(b"#type: python\\na=4\\nb=5"))
+    {'a': 4, 'b': 5}
+
+
     Logs the failed tries with the logging module, with level logging.DEBUG
     """
     head = file.read(6)
     if head == "#type:".encode("utf-8"):  # a loader is specified?
         data_type, options = load_datatype(
-            file.readline().decode("utf-8")[:-1]  # options encoding is utf-8, indexing to strip the newline
+            file.readline().decode("utf-8")[:-1],  # options encoding is utf-8, indexing to strip the newline
+            {}
         )
         # detect encoding
         if "encoding" in options:
