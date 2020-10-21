@@ -93,6 +93,7 @@ auto_loaders: List[str] = [
     "number",
     "bool",
     "none",
+    "ini",
     "yaml",  # if not installed will use the dummy loader
     "json",
     "python",  # disabled by default
