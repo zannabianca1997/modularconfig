@@ -43,7 +43,7 @@ or even the entire directory tree!
 >>> modularconfig.get("/opt/myapp/config")
 {'mainconf.json': {'content': 'this is, obviously, a json file', 'version': [2, 3]}, 'nested': { ...
 
-File type can be specified directly:
+File type can be specified directly (see `Loading Files`_):
 
 .. code-block:: text
 
@@ -73,3 +73,30 @@ and a context manger is provided to temporarily change it
 ...     modularconfig.get("answer")
 42
 
+Loading Files
+-------------
+
+The config files can include an intestation that specify the datatype and evntual options::
+
+    #type:text:encoding=utf-8
+    #type:json
+    #type:base64:altchars=-_;validate=false
+
+Type specification is always decoded from utf-8. The special option "encoding" is not passed to the loader but used to decode the rest of the file.
+
+The available loaders are:
+
+- Dict types:
+
+  - json
+  - yaml [if pyyaml is installed, throw a MissingLoaderError otherwise]
+  - python [disabled by default, see `Dangerous Loaders`]
+
+- Primitive types:
+
+  - int, integer
+  - float, real
+  - complex
+  - number, num [try in order to parse the text as a int, then a float, then a complex number]
+  - base64 [accept altchars and validate as options]
+  - text
