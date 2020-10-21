@@ -93,6 +93,7 @@ auto_loaders: List[str] = [
     "number",
     "bool",
     "none",
+    "ini",
     "yaml",  # if not installed will use the dummy loader
     "json",
     "python",  # disabled by default
@@ -144,7 +145,7 @@ def load_file(file: BytesIO):
         )
         # detect encoding
         if "encoding" in options:
-            encoding = options["encoding"].strip()
+            encoding = options.pop("encoding").strip()
         else:
             encoding = getpreferredencoding()
         # if an encoding is specified, use that
