@@ -141,3 +141,11 @@ modularconfig.errors.DisabledLoaderError: 'python' loader is disabled. Set dange
 
 Some loaders (like yaml) can offer both functionality: a safe subset and a full loader. In that case the full loader will be used only if the flag is True
 
+Lazy Loading
+------------
+
+Files are loaded only one time, at the first get request that point to them, to a setting inside them, or a directory in their path.
+
+Users can control the moment in which file are loaded using the ``modularconfig.ensure`` function, that will preload the given file or directory.
+
+``ensure`` also expose a ``reload`` attribute that can be used to reload files changed on disk
