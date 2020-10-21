@@ -467,7 +467,87 @@ class ModularLoaders(TestCase):
             "Aliased"
         )
 
-#todo: write ini file testing
+class IniFile(TestCase):
+    ini_file = \
+"""[DEFAULT]
+ServerAliveInterval = 45
+Compression = yes
+CompressionLevel = 9
+ForwardX11 = yes
+
+# this is a comment :)
+
+[bitbucket.org]
+User = hg
+
+[topsecret.server.com]
+Port = 50022
+ForwardX11 = no
+"""
+    def setUp(self):
+        self.test_file = NamedTemporaryFile(mode="w", delete=False).name
+
+    def tearDown(self) -> None:
+        remove(self.test_file)
+
+    def test_loading(self):
+        with open(self.test_file, "w") as fil:
+            fil.write("#type: ini\n")
+            fil.write(self.ini_file)
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(join(self.test_file, "./topsecret.server.com/port")),
+            "50022"
+        )
+
+    def test_auto_loading(self):
+        with open(self.test_file, "w") as fil:
+            fil.write(self.ini_file)
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(join(self.test_file, "./topsecret.server.com/port")),
+            "50022"
+        )
+
+    def test_defaults(self):
+        with open(self.test_file, "w") as fil:
+            fil.write("#type: ini\n")
+            fil.write(self.ini_file)
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(join(self.test_file, "./topsecret.server.com/ServerAliveInterval")),
+            "45"
+        )
+
+    def test_delimiters(self):
+        with open(self.test_file, "w") as fil:
+            fil.write("#type: ini:delimiters=[\"-\"];comment_prefixes=[\"...\"]\n")  # marking delimiters
+            fil.write(self.ini_file.replace("=", "-").replace("#", "..."))  # changing the delimiters
+        modularconfig.ensure(self.test_file, reload=True)  # we modified it
+        self.assertEqual(
+            modularconfig.get(join(self.test_file, "./topsecret.server.com/port")),
+            "50022"
+        )
+
+    def test_flag(self):
+        with self.subTest("without_setting"):
+            with open(self.test_file, "w") as fil:
+                fil.write("#type: ini\n")
+                fil.write("""[no_value]\nno_value_flag""")
+            self.assertRaises(
+                modularconfig.LoadingError,
+                modularconfig.ensure, self.test_file, reload=True  # we modified it
+            )
+        with self.subTest("with_setting"):
+            with open(self.test_file, "w") as fil:
+                fil.write("#type: ini:allow_no_value\n")
+                fil.write("""[no_value]\nno_value_flag""")
+            modularconfig.ensure(self.test_file, reload=True)  # we modified it
+            self.assertEqual(
+                modularconfig.get(join(self.test_file, "./no_value/no_value_flag")),
+                None
+            )  # we can recover it tho
+
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)
