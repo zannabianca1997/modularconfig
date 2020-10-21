@@ -101,6 +101,8 @@ The available loaders are:
   - base64 [accept altchars and validate as options]
   - text
 
+If no type specification is given ``configloader.loaders.auto_loaders`` contains a list of loaders that will be tried in order.
+
 Users can define their own loaders:
 
 .. code-block:: python
@@ -119,6 +121,8 @@ Users can define their own loaders:
             return parsed_obj
 
     modularconfig.loaders.register_loader(myloader())
+
+Loading functions should throw ``configloader.LoadingError`` if they can't load ``text`` if they need to be added to ``auto_loaders``
 
 Dangerous Loaders
 -----------------
