@@ -124,12 +124,23 @@ def load_file(file: BytesIO):
       ...
     modularconfig.errors.LoadingError: Can't decode json
 
+    Dangerous loaders are disabled by default
+    >>> load_file(BytesIO(b"#type: python\\na=4\\nb=5"))
+    Traceback (most recent call last):
+      ...
+    modularconfig.errors.DisabledLoaderError: 'python' loader is disabled. Set dangerous_loaders['python'] to True to enable
+    >>> dangerous_loaders["python"] = True
+    >>> load_file(BytesIO(b"#type: python\\na=4\\nb=5"))
+    {'a': 4, 'b': 5}
+
+
     Logs the failed tries with the logging module, with level logging.DEBUG
     """
     head = file.read(6)
     if head == "#type:".encode("utf-8"):  # a loader is specified?
         data_type, options = load_datatype(
-            file.readline().decode("utf-8")[:-1]  # options encoding is utf-8, indexing to strip the newline
+            file.readline().decode("utf-8")[:-1],  # options encoding is utf-8, indexing to strip the newline
+            {}
         )
         # detect encoding
         if "encoding" in options:
