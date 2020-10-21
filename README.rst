@@ -91,6 +91,7 @@ The available loaders are:
   - json
   - yaml [if pyyaml is installed, throw a MissingLoaderError otherwise]
   - python [disabled by default, see `Dangerous Loaders`_]
+  - ini  [return a ConfigLoader instance]
 
 - Primitive types:
 
