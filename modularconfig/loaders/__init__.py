@@ -11,7 +11,7 @@ from modularconfig.loaders.datatype import load as load_datatype
 from logging import getLogger
 logger = getLogger(__name__)
 
-dangerous_loaders = {}
+dangerous_loaders: Dict[str, bool] = {}
 loaders: Dict[str, Callable[[str, Dict[str, str]], Any]] = {}
 
 
@@ -79,7 +79,6 @@ def register_loader(loader, use_dangerous: bool = False):
         loaders[alias] = load_func
 
 
-
 for file_name in Path(__file__).parent.glob("*.py"):
     if file_name.name == "__init__.py":
         continue  # skip this file
@@ -87,7 +86,6 @@ for file_name in Path(__file__).parent.glob("*.py"):
     register_loader(
         import_module(f"modularconfig.loaders.{file_name.stem}")
     )
-
 
 
 # if no type is specified this loaders will be tried in this order
